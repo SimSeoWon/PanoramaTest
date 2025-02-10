@@ -79,6 +79,8 @@ class FHexagonData
 public:
 	FHexagonData();
 	void SetData(UUIHexagonTileDataBase* inTileData);
+	void SetArrUV();
+
 public:
 	int32 Index = 0; //인덱스
 
@@ -86,7 +88,9 @@ public:
 
 	TArray<FVector2D> Neighbors; // 이웃된 타일의 좌표.
 
-	TArray<FVector> ArrVertices; // 
+	TArray<FVector> ArrVertices; // 3차원 공간 좌표 정보.
+
+	TArray<FVector2D> ArrUV; // 정점의 UV 정보.
 
 	TArray<int32> ArrVerticeID;
 

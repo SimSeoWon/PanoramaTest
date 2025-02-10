@@ -46,7 +46,6 @@ void AProceduralMeshPlayground::BuildMeshHexagon(float inScale, int32 inColumn, 
 	TileList.Reset();
 	TileList.Reserve(tileItems.Num());
 
-
 	for (int32 i = 0; i < tileItems.Num(); i++)
 	{
 		auto iter = tileItems[i];
@@ -59,6 +58,7 @@ void AProceduralMeshPlayground::BuildMeshHexagon(float inScale, int32 inColumn, 
 	}
 
 	ArrVertices.Reserve(inCount * 7);
+	ArrUVs.Reserve(ArrVertices.Num());
 	for (int32 i = 0; i < inCount; i++)
 	{
 		AddHexagon(i);
@@ -68,12 +68,6 @@ void AProceduralMeshPlayground::BuildMeshHexagon(float inScale, int32 inColumn, 
 	for (int32 i = 0; i < ArrVertices.Num(); ++i)
 	{
 		ArrNormals.Emplace(FVector(0, 0, 1));
-	}
-
-	ArrUVs.Reserve(ArrVertices.Num());
-	for (int32 i = 0; i < ArrVertices.Num(); ++i)
-	{
-		ArrUVs.Emplace(FVector2D(0, 1));
 	}
 
 	// Assign the geometry data to the mesh component
@@ -93,16 +87,14 @@ void  AProceduralMeshPlayground::AddHexagon(int32 index)
 	if (false == tileInfo.IsValid())
 		return;
 
-	
-
-	float testHeight = ((FMath::Rand32() + index) % 3) * 10;
-
 	for (int32 i = 0; i < 7; i++)
 	{
 		if (false == tileInfo->ArrVertices.IsValidIndex(i))
 			continue;
 
-		ArrVertices.Emplace(FVector(tileInfo->ArrVertices[i].X, tileInfo->ArrVertices[i].Y, tileInfo->Height));
+		ArrVertices.Emplace(tileInfo->ArrVertices[i]);
+
+		ArrUVs.Emplace(FVector2D(tileInfo->ArrUV[i].X, tileInfo->ArrUV[i].Y));
 	}
 
 	AddTriangle(index);
@@ -580,6 +572,7 @@ void AProceduralMeshPlayground::ConvertToStaticMesh()
 FHexagonData::FHexagonData()
 {
 	Index = 0; //인덱스
+	SetArrUV();
 }
 
 void FHexagonData::SetData(UUIHexagonTileDataBase* inTileData)
@@ -598,11 +591,11 @@ void FHexagonData::SetData(UUIHexagonTileDataBase* inTileData)
 	ArrVertices.Reset();
 	ArrVertices.Reserve(7);
 
-	FVector vecCenter = FVector(inTileData->Center.X, inTileData->Center.Y, 0.0f);
+	FVector vecCenter = FVector(inTileData->Center.X, inTileData->Center.Y, Height);
 	ArrVertices.Emplace(rotation.RotateVector(vecCenter));
 	for (int32 i = 0; i < 6; i++)
 	{
-		FVector vecCorner = FVector(inTileData->CornerList[i].X, inTileData->CornerList[i].Y, 0.0f);
+		FVector vecCorner = FVector(inTileData->CornerList[i].X, inTileData->CornerList[i].Y, Height);
 		ArrVertices.Emplace(rotation.RotateVector(vecCorner));
 	}
 
@@ -613,4 +606,26 @@ void FHexagonData::SetData(UUIHexagonTileDataBase* inTileData)
 
 		ArrVerticeID.Emplace((7 * Index) + i);
 	}
+}
+
+void FHexagonData::SetArrUV()
+{
+	float center = 0.5f;
+	float width = FMath::Sqrt(3.0f) * center;
+	float halfWidth = width / 2;
+	float height = 2 * center;
+	float halfHeight = center;
+	float quarterHeight = halfHeight / 2;
+
+	ArrUV.Reserve(7);
+	ArrUV =
+	{
+		FVector2D(center, center), // 중앙
+		FVector2D(center, center - halfHeight), // 최상단
+		FVector2D(center - halfWidth, center - quarterHeight), // 좌 상단
+		FVector2D(center - halfWidth, center + quarterHeight), // 좌 하단
+		FVector2D(center, center + halfHeight), // 최하단
+		FVector2D(center + halfWidth, center + quarterHeight), // 우 하단
+		FVector2D(center + halfWidth, center - quarterHeight), // 우 상단
+	};
 }
